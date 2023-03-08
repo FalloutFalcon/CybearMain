@@ -1,0 +1,9 @@
+/**
+ * Motors
+ */
+#define FRONT_LEFT_WHEEL_PORT 19
+#define BACK_LEFT_WHEEL_PORT 20
+#define FRONT_RIGHT_WHEEL_PORT 12
+#define BACK_RIGHT_WHEEL_PORT 11
+#define LAUNCHER_PORT 1
+#define INTAKE_PORT 2
