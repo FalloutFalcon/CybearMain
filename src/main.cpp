@@ -28,8 +28,8 @@ void initialize() {
 
 	lcd::register_btn1_cb(on_center_button);
 
-	Motor front_left_wheel_initializer (FRONT_LEFT_WHEEL_PORT, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_DEGREES);
-    Motor back_left_wheel_initializer (BACK_LEFT_WHEEL_PORT, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_DEGREES);
+	Motor front_left_wheel_initializer (FRONT_LEFT_WHEEL_PORT, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
+    Motor back_left_wheel_initializer (BACK_LEFT_WHEEL_PORT, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
     Motor front_right_wheel_initializer (FRONT_RIGHT_WHEEL_PORT, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_DEGREES);
     Motor back_right_wheel_initializer (BACK_RIGHT_WHEEL_PORT, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_DEGREES);
 
@@ -80,22 +80,34 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	Controller master(E_CONTROLLER_MASTER);
+	Controller controller_1(E_CONTROLLER_MASTER);
 	Motor front_left_wheel(FRONT_LEFT_WHEEL_PORT);
 	Motor front_right_wheel(FRONT_RIGHT_WHEEL_PORT);
+	Motor back_left_wheel(BACK_LEFT_WHEEL_PORT);
+	Motor back_right_wheel(BACK_RIGHT_WHEEL_PORT);
 
 	while (true) {
 		lcd::print(0, "%d %d %d", (lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
 		                 (lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
 		                 (lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);
-		int left = master.get_analog(ANALOG_LEFT_Y);
-		int right = master.get_analog(ANALOG_RIGHT_Y);
+		
+		// calculate the drivetrain motor velocities from the controller joystick axies
+        // left = Axis3 + Axis1
+        // right = Axis3 - Axis1
+        int left = controller_1.get_analog(ANALOG_LEFT_Y) + controller_1.get_analog(ANALOG_RIGHT_X);
+        int right = controller_1.get_analog(ANALOG_LEFT_Y) - controller_1.get_analog(ANALOG_RIGHT_X);
 
-		lcd::print(1, "left");
-		lcd::print(2, "right");
+	    char print_left = left;
+	    char print_right = right;
 
-		front_left_wheel = left;
-		front_right_wheel = right;
+		//lcd::print(4, print_left );
+		//lcd::print(5, print_right );
+
+		front_left_wheel.move(left);
+		front_right_wheel.move(right);
+		back_left_wheel.move(left);
+		back_right_wheel.move(right);
+		
 
 		delay(20);
 	}
