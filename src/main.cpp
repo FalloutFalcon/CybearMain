@@ -1,22 +1,6 @@
 #include "main.h"
 
 /**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-void on_center_button() {
-	static bool pressed = false;
-	pressed = !pressed;
-	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
-	} else {
-		pros::lcd::clear_line(2);
-	}
-}
-
-/**
  * Runs initialization code. This occurs as soon as the program is started.
  *
  * All other competition modes are blocked by initialize; it is recommended
@@ -24,9 +8,7 @@ void on_center_button() {
  */
 void initialize() {
 	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
-
-	pros::lcd::register_btn1_cb(on_center_button);
+	pros::lcd::set_text(1, "Initialize!");
 
 	pros::Motor front_left_wheel_initializer (FRONT_LEFT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, false, pros::E_MOTOR_ENCODER_DEGREES);
     pros::Motor back_left_wheel_initializer (BACK_LEFT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, false, pros::E_MOTOR_ENCODER_DEGREES);
@@ -40,7 +22,9 @@ void initialize() {
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
-void disabled() {}
+void disabled() {
+	pros::lcd::set_text(1, "Disabled!");
+}
 
 /**
  * Runs after initialize(), and before autonomous when connected to the Field
@@ -51,7 +35,12 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
+void competition_initialize() {
+	pros::lcd::set_text(1, "Competition Initalize!");
+	// uses the 3 buttons to select a auton script
+	lcdselect();
+
+}
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -64,7 +53,9 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+	pros::lcd::set_text(1, "Autonomous!");
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -80,11 +71,13 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	pros::lcd::set_text(1, "Opcontrol!");
 	pros::Controller controller_1(pros::E_CONTROLLER_MASTER);
 	pros::Motor front_left_wheel(FRONT_LEFT_WHEEL_PORT);
 	pros::Motor front_right_wheel(FRONT_RIGHT_WHEEL_PORT);
 	pros::Motor back_left_wheel(BACK_LEFT_WHEEL_PORT);
 	pros::Motor back_right_wheel(BACK_RIGHT_WHEEL_PORT);
+	lcdselect();
 
 	while (true) {
 		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
