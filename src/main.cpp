@@ -15,6 +15,10 @@ void initialize() {
     pros::Motor front_right_wheel_initializer (FRONT_RIGHT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
     pros::Motor back_right_wheel_initializer (BACK_RIGHT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
 
+	pros::Motor launcher_initializer (LAUNCHER_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
+	pros::Motor intake_initializer (INTAKE_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
+	pros::Motor expansion_initializer (EXPANSION_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
+
 }
 
 /**
@@ -77,6 +81,10 @@ void opcontrol() {
 	pros::Motor front_right_wheel(FRONT_RIGHT_WHEEL_PORT);
 	pros::Motor back_left_wheel(BACK_LEFT_WHEEL_PORT);
 	pros::Motor back_right_wheel(BACK_RIGHT_WHEEL_PORT);
+
+	pros::Motor launcher(LAUNCHER_PORT);
+	pros::Motor intake(INTAKE_PORT);
+	pros::Motor expansion(EXPANSION_PORT);
 	lcdselect();
 
 	while (true) {
@@ -98,5 +106,25 @@ void opcontrol() {
 		back_right_wheel.move(right);
 		
 		pros::delay(20);
+
+		if (controller_1.get_digital(DIGITAL_R1)) {
+          intake.move(127);
+        }
+		else if(controller_1.get_digital(DIGITAL_R2)) {
+		  intake.move(-127);
+		}
+        else {
+          intake.move(0);
+        }
+
+		if (controller_1.get_digital(DIGITAL_L1)) {
+          launcher.move(127);
+        }
+		else if(controller_1.get_digital(DIGITAL_L2)) {
+		  launcher.move(-127);
+		}
+        else {
+          launcher.move(0);
+        }
 	}
 }
