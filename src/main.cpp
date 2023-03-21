@@ -42,7 +42,8 @@ void disabled() {
 void competition_initialize() {
 	pros::lcd::set_text(1, "Competition Initalize!");
 	// uses the 3 buttons to select a auton script
-	lcdselect();
+	//lcdselect();
+	//autonsetup();
 
 }
 
@@ -59,6 +60,7 @@ void competition_initialize() {
  */
 void autonomous() {
 	pros::lcd::set_text(1, "Autonomous!");
+	//autonstart();
 }
 
 /**
@@ -104,8 +106,6 @@ void opcontrol() {
 		front_right_wheel.move(right);
 		back_left_wheel.move(left);
 		back_right_wheel.move(right);
-		
-		pros::delay(20);
 
 		if (controller_1.get_digital(DIGITAL_R1)) {
           intake.move(127);
@@ -126,5 +126,7 @@ void opcontrol() {
         else {
           launcher.move(0);
         }
+
+		pros::delay(20);
 	}
 }
