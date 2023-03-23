@@ -1,4 +1,6 @@
 #include "main.h"
+
+namespace cybear {
 void autonsetup () {
     if (auton_mode == 0)
     {
@@ -39,4 +41,5 @@ void skillsauton () {
 void autonstart () {
     pros::lcd::set_text(7, "Auton Started");
     
+}
 }

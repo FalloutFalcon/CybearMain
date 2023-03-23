@@ -1,4 +1,5 @@
 #include "main.h"
+namespace cybear {
 void lcdselect () {
     int auton_mode = -1;
     pros::lcd::set_text(1, "LCDSelect!");
@@ -19,5 +20,6 @@ void lcdselect () {
         pros::delay(20);
 	}
     pros::lcd::print(7, "auton mode selected = %d", auton_mode); 
+}
 }
 	

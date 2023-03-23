@@ -10,7 +10,8 @@
 #define BACK_RIGHT_WHEEL_PORT 12
 
 #define LAUNCHER_PORT 1
-#define INTAKE_PORT 2
-#define EXPANSION_PORT 3
+#define TOP_INTAKE_PORT 2
+#define BOTTOM_INTAKE_PORT 3
+#define EXPANSION_PORT 4
 
 #endif //_ROBOT_HPP_
