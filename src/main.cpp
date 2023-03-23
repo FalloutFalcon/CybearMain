@@ -15,7 +15,7 @@ void initialize() {
     pros::Motor front_right_wheel_initializer (FRONT_RIGHT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
     pros::Motor back_right_wheel_initializer (BACK_RIGHT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
 
-	pros::Motor launcher_initializer (LAUNCHER_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
+	pros::Motor launcher_initializer (LAUNCHER_PORT, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_DEGREES);
 	pros::Motor intake_initializer (INTAKE_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
 	pros::Motor expansion_initializer (EXPANSION_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
 

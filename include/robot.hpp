@@ -1,3 +1,6 @@
+#ifndef _ROBOT_HPP_
+#define _ROBOT_HPP_
+
 /**
  * Motors
  */
@@ -9,3 +12,5 @@
 #define LAUNCHER_PORT 1
 #define INTAKE_PORT 2
 #define EXPANSION_PORT 3
+
+#endif //_ROBOT_HPP_
