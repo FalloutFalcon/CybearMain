@@ -1,8 +1,11 @@
 #include "main.h"
 using namespace okapi;
 
+std::shared_ptr<ChassisController> drive;
+
 namespace cybear {
 void okapiinitialize () {
+    pros::lcd::set_text(2, "Okapi initalize!");
     std::shared_ptr<ChassisController> drive =
         ChassisControllerBuilder()
             .withMotors(-FRONT_LEFT_WHEEL_PORT, FRONT_RIGHT_WHEEL_PORT, -BACK_LEFT_WHEEL_PORT, BACK_RIGHT_WHEEL_PORT)
@@ -12,6 +15,7 @@ void okapiinitialize () {
 }
 
 void prosinitialize () {
+    pros::lcd::set_text(2, "Pros initalize!");
     pros::Motor front_left_wheel_initializer (FRONT_LEFT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, false, pros::E_MOTOR_ENCODER_DEGREES);
     pros::Motor back_left_wheel_initializer (BACK_LEFT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, false, pros::E_MOTOR_ENCODER_DEGREES);
     pros::Motor front_right_wheel_initializer (FRONT_RIGHT_WHEEL_PORT, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
@@ -24,14 +28,18 @@ void prosinitialize () {
 }
 
 void okapiopcontrol () {
-    // Chassis Controller - lets us drive the robot around with open- or closed-loop control
+    pros::lcd::set_text(2, "Okapi opcontrol!");
+
+    pros::lcd::set_text(2, "Okapi initalize!");
     std::shared_ptr<ChassisController> drive =
         ChassisControllerBuilder()
-            .withMotors(-FRONT_LEFT_WHEEL_PORT, FRONT_RIGHT_WHEEL_PORT, -BACK_LEFT_WHEEL_PORT, BACK_RIGHT_WHEEL_PORT)
+            .withMotors(
+                {-FRONT_LEFT_WHEEL_PORT, -BACK_LEFT_WHEEL_PORT}, 
+                {FRONT_RIGHT_WHEEL_PORT, BACK_RIGHT_WHEEL_PORT}
+            )
             // Green gearset, 4 in wheel diam, 11.5 in wheel track
-            .withDimensions(AbstractMotor::gearset::green, {{4_in, 11.5_in}, imev5GreenTPR})
+            .withDimensions(AbstractMotor::gearset::green, {{4_in, 9.5_in}, imev5GreenTPR})
             .build();
-
     // Joystick to read analog values for tank or arcade control
     // Master controller by default
     Controller controller;
@@ -40,6 +48,12 @@ void okapiopcontrol () {
     ControllerButton launcher_forward_button(ControllerDigital::R1);
     ControllerButton launcher_reverse_button(ControllerDigital::R2);
     Motor launcher_motor(LAUNCHER_PORT);
+
+    ControllerButton intake_forward_button(ControllerDigital::L1);
+    ControllerButton intake_reverse_button(ControllerDigital::L2);
+	Motor top_intake(TOP_INTAKE_PORT);
+    Motor bottom_intake(BOTTOM_INTAKE_PORT);
+    MotorGroup intake_group({top_intake, bottom_intake});
 
     // Button to run our sample autonomous routine
     ControllerButton run_auto_button(ControllerDigital::X);
@@ -56,6 +70,14 @@ void okapiopcontrol () {
             launcher_motor.moveVoltage(-12000);
         } else {
             launcher_motor.moveVoltage(0);
+        }
+
+        if (intake_forward_button.isPressed()) {
+            intake_group.moveVoltage(12000);
+        } else if (intake_reverse_button.isPressed()) {
+            intake_group.moveVoltage(-12000);
+        } else {
+            intake_group.moveVoltage(0);
         }
         }
 
@@ -74,6 +96,7 @@ void okapiopcontrol () {
     }
 
 void prosopcontrol () {
+    pros::lcd::set_text(2, "Pros opcontrol!");
     pros::Controller controller_1(pros::E_CONTROLLER_MASTER);
 	pros::Motor front_left_wheel(FRONT_LEFT_WHEEL_PORT);
 	pros::Motor front_right_wheel(FRONT_RIGHT_WHEEL_PORT);

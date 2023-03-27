@@ -1,8 +1,8 @@
 #include "main.h"
 namespace cybear {
 void lcdselect () {
+    pros::lcd::set_text(2, "LCDSelect!");
     int auton_mode = -1;
-    pros::lcd::set_text(1, "LCDSelect!");
 	while (auton_mode == -1) {
 		unsigned int button = pros::lcd::read_buttons();
         if (button == 1) {

@@ -10,7 +10,8 @@ void initialize() {
 	pros::lcd::initialize();
 	pros::lcd::set_text(1, "Initialize!");
 
-    cybear::prosinitialize();
+    //cybear::prosinitialize();
+	cybear::okapiinitialize();
 
 }
 
@@ -72,4 +73,5 @@ void autonomous() {
 void opcontrol() {
 	pros::lcd::set_text(1, "Opcontrol!");
 	cybear::prosopcontrol();
+	//cybear::okapiopcontrol();
 }
