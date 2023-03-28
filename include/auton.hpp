@@ -2,8 +2,6 @@
 #define _AUTON_HPP_
 
 namespace cybear {
-void autonsetup ();
-void autonstart ();
 void leftsideauton ();
 void skillsauton ();
 void rightsideauton ();

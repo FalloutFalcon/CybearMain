@@ -72,6 +72,6 @@ void autonomous() {
  */
 void opcontrol() {
 	pros::lcd::set_text(1, "Opcontrol!");
-	cybear::prosopcontrol();
-	//cybear::okapiopcontrol();
+	//cybear::prosopcontrol();
+	cybear::okapiopcontrol();
 }

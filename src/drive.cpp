@@ -8,9 +8,12 @@ void okapiinitialize () {
     pros::lcd::set_text(2, "Okapi initalize!");
     std::shared_ptr<ChassisController> drive =
         ChassisControllerBuilder()
-            .withMotors(-FRONT_LEFT_WHEEL_PORT, FRONT_RIGHT_WHEEL_PORT, -BACK_LEFT_WHEEL_PORT, BACK_RIGHT_WHEEL_PORT)
+            .withMotors(
+                {-FRONT_LEFT_WHEEL_PORT, -BACK_LEFT_WHEEL_PORT}, 
+                {FRONT_RIGHT_WHEEL_PORT, BACK_RIGHT_WHEEL_PORT}
+            )
             // Green gearset, 4 in wheel diam, 11.5 in wheel track
-            .withDimensions(AbstractMotor::gearset::green, {{4_in, 11.5_in}, imev5GreenTPR})
+            .withDimensions(AbstractMotor::gearset::green, {{4_in, 9.5_in}, imev5GreenTPR})
             .build();
 }
 
@@ -29,8 +32,6 @@ void prosinitialize () {
 
 void okapiopcontrol () {
     pros::lcd::set_text(2, "Okapi opcontrol!");
-
-    pros::lcd::set_text(2, "Okapi initalize!");
     std::shared_ptr<ChassisController> drive =
         ChassisControllerBuilder()
             .withMotors(
@@ -88,6 +89,8 @@ void okapiopcontrol () {
                 drive->moveDistance(12_in); // Drive forward 12 inches
                 drive->turnAngle(90_deg);   // Turn in place 90 degrees
             }
+            //cybear::lcdselect();
+            //cybear::autonstart();
         }
 
         // Wait and give up the time we don't need to other tasks.
