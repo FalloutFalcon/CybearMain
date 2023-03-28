@@ -1,20 +1,9 @@
 #include "main.h"
 using namespace okapi;
 
-std::shared_ptr<ChassisController> drive;
-
 namespace cybear {
 void okapiinitialize () {
     pros::lcd::set_text(2, "Okapi initalize!");
-    std::shared_ptr<ChassisController> drive =
-        ChassisControllerBuilder()
-            .withMotors(
-                {-FRONT_LEFT_WHEEL_PORT, -BACK_LEFT_WHEEL_PORT}, 
-                {FRONT_RIGHT_WHEEL_PORT, BACK_RIGHT_WHEEL_PORT}
-            )
-            // Green gearset, 4 in wheel diam, 11.5 in wheel track
-            .withDimensions(AbstractMotor::gearset::green, {{4_in, 9.5_in}, imev5GreenTPR})
-            .build();
 }
 
 void prosinitialize () {
@@ -35,59 +24,74 @@ void okapiopcontrol () {
     std::shared_ptr<ChassisController> drive =
         ChassisControllerBuilder()
             .withMotors(
-                {-FRONT_LEFT_WHEEL_PORT, -BACK_LEFT_WHEEL_PORT}, 
-                {FRONT_RIGHT_WHEEL_PORT, BACK_RIGHT_WHEEL_PORT}
+                {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
+                {-FRONT_RIGHT_WHEEL_PORT, -BACK_RIGHT_WHEEL_PORT}
             )
             // Green gearset, 4 in wheel diam, 11.5 in wheel track
             .withDimensions(AbstractMotor::gearset::green, {{4_in, 9.5_in}, imev5GreenTPR})
             .build();
-    // Joystick to read analog values for tank or arcade control
     // Master controller by default
     Controller controller;
 
-    // launcher related objects
+    // Launcher related objects
     ControllerButton launcher_forward_button(ControllerDigital::R1);
     ControllerButton launcher_reverse_button(ControllerDigital::R2);
-    Motor launcher_motor(LAUNCHER_PORT);
+    Motor launcher_motor(LAUNCHER_PORT, false, AbstractMotor::gearset::blue, AbstractMotor::encoderUnits::counts);
 
+    // Intake related objects
     ControllerButton intake_forward_button(ControllerDigital::L1);
     ControllerButton intake_reverse_button(ControllerDigital::L2);
 	Motor top_intake(TOP_INTAKE_PORT);
     Motor bottom_intake(BOTTOM_INTAKE_PORT);
     MotorGroup intake_group({top_intake, bottom_intake});
 
+    int launcher_voltage = 12000;
+
+    ControllerButton speed_up_button(ControllerDigital::up);
+    ControllerButton speed_down_button(ControllerDigital::down);
+
     // Button to run our sample autonomous routine
     ControllerButton run_auto_button(ControllerDigital::X);
 
     while (true) {
         // Arcade drive with the left stick
-        drive->getModel()->arcade(controller.getAnalog(ControllerAnalog::leftY),
+        drive->getModel()->arcade(controller.getAnalog(ControllerAnalog::rightY),
                                   controller.getAnalog(ControllerAnalog::leftX));
 
-        // else, the launcher isn't all the way down
+        if (speed_up_button.changedToPressed() & launcher_voltage < 11000) {
+            launcher_voltage + 1000;
+        }
+        if (speed_down_button.changedToPressed() & launcher_voltage > 1000) {
+            launcher_voltage - 1000;
+        }
+
         if (launcher_forward_button.isPressed()) {
-            launcher_motor.moveVoltage(12000);
+            launcher_motor.moveVoltage(launcher_voltage);
         } else if (launcher_reverse_button.isPressed()) {
-            launcher_motor.moveVoltage(-12000);
+            launcher_motor.moveVoltage(-launcher_voltage);
         } else {
             launcher_motor.moveVoltage(0);
         }
 
         if (intake_forward_button.isPressed()) {
-            intake_group.moveVoltage(12000);
+            intake_group.moveVoltage(launcher_voltage);
         } else if (intake_reverse_button.isPressed()) {
-            intake_group.moveVoltage(-12000);
+            intake_group.moveVoltage(-launcher_voltage);
         } else {
             intake_group.moveVoltage(0);
         }
         }
 
         // Run the test autonomous routine if we press the button
+        if (run_auto_button.isPressed()) {
+            pros::lcd::set_text(3, "Auton Test 2 Electric Boogalo!");
+        }
         if (run_auto_button.changedToPressed()) {
+            pros::lcd::set_text(2, "Auton Test!");
             // Drive the robot in a square pattern using closed-loop control
             for (int i = 0; i < 4; i++) {
-                drive->moveDistance(12_in); // Drive forward 12 inches
-                drive->turnAngle(90_deg);   // Turn in place 90 degrees
+                //drive->moveDistance(6_in); // Drive forward 12 inches
+                //drive->turnAngle(90_deg);   // Turn in place 90 degrees
             }
             //cybear::lcdselect();
             //cybear::autonstart();

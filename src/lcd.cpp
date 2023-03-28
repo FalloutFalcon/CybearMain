@@ -8,14 +8,11 @@ void lcdselect () {
 		unsigned int button = pros::lcd::read_buttons();
         if (button == 1) {
             auton_mode = 1;
-        }
-        if (button == 2) {
+        } else if (button == 2) {
             auton_mode = 2;
-        }
-        if (button == 4) {
+        } else if (button == 4) {
             auton_mode = 3;
-        }
-        else {
+        } else {
             auton_mode = 0;
         }
         pros::delay(10);
@@ -24,26 +21,18 @@ void lcdselect () {
 }
 
 void autonstart () {
-    if (auton_mode == 0)
-    {
+    if (auton_mode == 0) {
         pros::lcd::set_text(7, "No auton started");
-    }
-    else if (auton_mode == 1)
-    {
+    } else if (auton_mode == 1) {
         pros::lcd::set_text(7, "Left auton started");
         cybear::leftsideauton();
-    }
-    else if (auton_mode == 2)
-    {
+    } else if (auton_mode == 2) {
         pros::lcd::set_text(7, "Skills auton started");
         cybear::skillsauton();
-    }
-    else if (auton_mode == 3)
-    {
+    } else if (auton_mode == 3)  {
         pros::lcd::set_text(7, "Right auton started");
         cybear::rightsideauton();
-    }
-    else {
+    } else {
         pros::lcd::set_text(7, "Error in auton start");
     }    
 }
