@@ -27,8 +27,8 @@ void okapiopcontrol () {
                 {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
                 {-FRONT_RIGHT_WHEEL_PORT, -BACK_RIGHT_WHEEL_PORT}
             )
-            // Green gearset, 4 in wheel diam, 11.5 in wheel track
-            .withDimensions(AbstractMotor::gearset::green, {{4_in, 9.5_in}, imev5GreenTPR})
+            // Green gearset, 4 in wheel diam, 9.5 in wheel track
+            .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
             .build();
     // Master controller by default
     Controller controller;
@@ -47,6 +47,10 @@ void okapiopcontrol () {
 
     int launcher_voltage = 12000;
 
+    ControllerButton expansion_up_button(ControllerDigital::A);
+    ControllerButton expansion_down_button(ControllerDigital::B);
+    Motor expansion(EXPANSION_PORT);
+
     ControllerButton speed_up_button(ControllerDigital::up);
     ControllerButton speed_down_button(ControllerDigital::down);
 
@@ -55,7 +59,7 @@ void okapiopcontrol () {
 
     while (true) {
         // Arcade drive with the left stick
-        drive->getModel()->arcade(controller.getAnalog(ControllerAnalog::rightY),
+         drive->getModel()->arcade(controller.getAnalog(ControllerAnalog::rightY),
                                   controller.getAnalog(ControllerAnalog::leftX));
 
         if (speed_up_button.changedToPressed() & launcher_voltage < 11000) {
@@ -80,6 +84,13 @@ void okapiopcontrol () {
         } else {
             intake_group.moveVoltage(0);
         }
+
+        if (expansion_up_button.isPressed()) {
+            expansion.moveVoltage(launcher_voltage);
+        } else if (expansion_down_button.isPressed()) {
+            expansion.moveVoltage(-launcher_voltage);
+        } else {
+            expansion.moveVoltage(0);
         }
 
         // Run the test autonomous routine if we press the button
@@ -88,19 +99,16 @@ void okapiopcontrol () {
         }
         if (run_auto_button.changedToPressed()) {
             pros::lcd::set_text(2, "Auton Test!");
-            // Drive the robot in a square pattern using closed-loop control
-            for (int i = 0; i < 4; i++) {
-                //drive->moveDistance(6_in); // Drive forward 12 inches
-                //drive->turnAngle(90_deg);   // Turn in place 90 degrees
-            }
-            //cybear::lcdselect();
-            //cybear::autonstart();
+            cybear::lcdselect();
+            cybear::autonstart();
         }
 
         // Wait and give up the time we don't need to other tasks.
         // Additionally, joystick values, motor telemetry, etc. all updates every 10 ms.
-        pros::delay(10);
+        pros::delay(10); 
     }
+}
+
 
 void prosopcontrol () {
     pros::lcd::set_text(2, "Pros opcontrol!");
@@ -157,5 +165,5 @@ void prosopcontrol () {
 		pros::delay(20);
 	}
 }
-}
 
+}

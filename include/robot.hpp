@@ -12,6 +12,6 @@
 #define LAUNCHER_PORT 1
 #define TOP_INTAKE_PORT 2
 #define BOTTOM_INTAKE_PORT 4
-#define EXPANSION_PORT 3
+#define EXPANSION_PORT 5
 
 #endif //_ROBOT_HPP_

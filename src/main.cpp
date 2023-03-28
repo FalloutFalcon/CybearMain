@@ -11,7 +11,7 @@ void initialize() {
 	pros::lcd::set_text(1, "Initialize!");
 
     //cybear::prosinitialize();
-	cybear::okapiinitialize();
+	//cybear::okapiinitialize();
 
 }
 

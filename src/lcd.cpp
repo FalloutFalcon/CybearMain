@@ -12,8 +12,6 @@ void lcdselect () {
             auton_mode = 2;
         } else if (button == 4) {
             auton_mode = 3;
-        } else {
-            auton_mode = 0;
         }
         pros::delay(10);
 	}
@@ -21,19 +19,20 @@ void lcdselect () {
 }
 
 void autonstart () {
+    pros::lcd::set_text(2, "Autonstart!");
     if (auton_mode == 0) {
-        pros::lcd::set_text(7, "No auton started");
+        pros::lcd::set_text(6, "No auton started");
     } else if (auton_mode == 1) {
-        pros::lcd::set_text(7, "Left auton started");
+        pros::lcd::set_text(6, "Left auton started");
         cybear::leftsideauton();
     } else if (auton_mode == 2) {
-        pros::lcd::set_text(7, "Skills auton started");
+        pros::lcd::set_text(6, "Skills auton started");
         cybear::skillsauton();
     } else if (auton_mode == 3)  {
-        pros::lcd::set_text(7, "Right auton started");
+        pros::lcd::set_text(6, "Right auton started");
         cybear::rightsideauton();
     } else {
-        pros::lcd::set_text(7, "Error in auton start");
+        pros::lcd::set_text(6, "Error in auton start");
     }    
 }
 }
