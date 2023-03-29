@@ -56,6 +56,8 @@ void okapiopcontrol () {
 
     // Button to run our sample autonomous routine
     ControllerButton run_auto_button(ControllerDigital::X);
+    
+    
 
     while (true) {
         // Arcade drive with the left stick
@@ -64,9 +66,11 @@ void okapiopcontrol () {
 
         if (speed_up_button.changedToPressed() & launcher_voltage < 11000) {
             launcher_voltage + 1000;
+            pros::lcd::print(5, "launcher voltage = %d out of 12000", launcher_voltage); 
         }
         if (speed_down_button.changedToPressed() & launcher_voltage > 1000) {
             launcher_voltage - 1000;
+            pros::lcd::print(5, "launcher voltage = %d out of 12000", launcher_voltage); 
         }
 
         if (launcher_forward_button.isPressed()) {
@@ -93,10 +97,9 @@ void okapiopcontrol () {
             expansion.moveVoltage(0);
         }
 
+        pros::lcd::print(4, "EFFICIENCY: Launcher:%d TopIntake:%d BottomIntake:%d", launcher_motor.getEfficiency(), top_intake.getEfficiency(), bottom_intake.getEfficiency());
+
         // Run the test autonomous routine if we press the button
-        if (run_auto_button.isPressed()) {
-            pros::lcd::set_text(3, "Auton Test 2 Electric Boogalo!");
-        }
         if (run_auto_button.changedToPressed()) {
             pros::lcd::set_text(2, "Auton Test!");
             cybear::lcdselect();
