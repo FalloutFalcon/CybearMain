@@ -1,7 +1,17 @@
 #include "main.h"
 using namespace okapi;
+/*
+std::shared_ptr<ChassisController> drive =
+        ChassisControllerBuilder()
+            .withMotors(
+                {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
+                {-FRONT_RIGHT_WHEEL_PORT, -BACK_RIGHT_WHEEL_PORT}
+            )
+            // Green gearset, 4 in wheel diam, 12 in wheel track
+            .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
+            .build();
+*/
 
-std::shared_ptr<ChassisController> drive;
 Controller controller;
 ControllerButton right_1_button(ControllerDigital::R1);
 ControllerButton right_2_button(ControllerDigital::R2);
@@ -31,9 +41,22 @@ Motor expansion(EXPANSION_PORT);
 double forward_move;
 double yaw_move;
 
+void controllerbuild () {
+    std::shared_ptr<ChassisController> drive =
+        ChassisControllerBuilder()
+            .withMotors(
+                {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
+                {-FRONT_RIGHT_WHEEL_PORT, -BACK_RIGHT_WHEEL_PORT}
+            )
+            // Green gearset, 4 in wheel diam, 12 in wheel track
+            .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
+            .build();
+}
+
 namespace cybear {
 void okapiinitialize () {
     pros::lcd::set_text(2, "Okapi initalize!");
+    //controllerbuild();
     //sets the string to hold the motor steady and prevents it from unspooling during match
     expansion.setBrakeMode(AbstractMotor::brakeMode::hold);
 }
@@ -41,6 +64,7 @@ void okapiinitialize () {
 void okapiopcontrol () {
     pros::lcd::set_text(2, "Okapi opcontrol!");
     // Master controller by default
+    
     std::shared_ptr<ChassisController> drive =
         ChassisControllerBuilder()
             .withMotors(
@@ -106,16 +130,21 @@ void okapiopcontrol () {
         bottom_efficency = bottom_intake.getEfficiency();
         pros::lcd::print(4, "EFF:out:%d Mid:%d In:%d", launcher_efficency, top_efficency, bottom_efficency);
         // Run the test autonomous routine if we press the button
+        
+        
         if (x_button.changedToPressed()) {
             pros::lcd::set_text(2, "Auton Test!");
             cybear::lcdselect();
             cybear::autonstart();
         }
+        
 
         // Wait and give up the time we don't need to other tasks.
         // Additionally, joystick values, motor telemetry, etc. all updates every 10 ms.
         pros::delay(10); 
     }
+
+
 }
 
 void disklaunch (int i) {
@@ -127,4 +156,51 @@ void disklaunch (int i) {
     intake_group.moveVoltage(0);
 }
 
+void roller (int i) {
+    top_intake.moveVoltage(6000);
+    std::shared_ptr<ChassisController> drive =
+        ChassisControllerBuilder()
+            .withMotors(
+                {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
+                {-FRONT_RIGHT_WHEEL_PORT, -BACK_RIGHT_WHEEL_PORT}
+            )
+            // Green gearset, 4 in wheel diam, 12 in wheel track
+            .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
+            .build();
+    drive->moveDistance(3_in);
+    pros::delay(i * 1000);
+    drive->moveDistance(-3_in);
+    top_intake.moveVoltage(0);
+}
+
+void leftsideauton () {
+    pros::lcd::set_text(7, "Left auton started");
+    //controllerbuild();
+    roller(2);
+}
+
+void rightsideauton () {
+    pros::lcd::set_text(7, "Right auton started");
+    //controllerbuild();
+    roller(2);
+}
+
+void skillsauton () {
+    pros::lcd::set_text(7, "Skills auton selected");
+    std::shared_ptr<ChassisController> drive =
+        ChassisControllerBuilder()
+            .withMotors(
+                {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
+                {-FRONT_RIGHT_WHEEL_PORT, -BACK_RIGHT_WHEEL_PORT}
+            )
+            // Green gearset, 4 in wheel diam, 12 in wheel track
+            .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
+            .build();
+    roller(2);
+    drive->setMaxVelocity(200);
+    drive->turnAngle(90_deg);
+    drive->waitUntilSettled();
+    drive->moveDistance(12_ft);
+    expansion.moveVoltage(12000);
+}
 }

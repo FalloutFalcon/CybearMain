@@ -34,8 +34,7 @@ void disabled() {
 void competition_initialize() {
 	pros::lcd::set_text(1, "Competition Initalize!");
 	// uses the 3 buttons to select a auton script
-	//lcdselect();
-	//autonsetup();
+	//cybear::lcdselect();
 
 }
 
@@ -52,7 +51,8 @@ void competition_initialize() {
  */
 void autonomous() {
 	pros::lcd::set_text(1, "Autonomous!");
-	//autonstart();
+	//cybear::autonstart();
+	cybear::skillsauton;
 }
 
 /**

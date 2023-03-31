@@ -43,7 +43,6 @@
 //#include "pros/api_legacy.h"
 #include "robot.hpp"
 #include "lcd.hpp"
-#include "auton.hpp"
 #include "motorcontrol.hpp"
 
 /**
