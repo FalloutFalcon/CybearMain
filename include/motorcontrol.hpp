@@ -1,10 +1,9 @@
-#ifndef _DRIVE_HPP_
-#define _DRIVE_HPP_
+#ifndef _motorcontrol_HPP_
+#define _motorcontrol_HPP_
 
 namespace cybear {
 void okapiinitialize ();
-void prosinitialize ();
 void okapiopcontrol ();
-void prosopcontrol ();
+void disklaunch (int i);
 }
 #endif //_DRIVE_HPP_

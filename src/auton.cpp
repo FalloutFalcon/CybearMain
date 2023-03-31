@@ -4,6 +4,7 @@ namespace cybear {
 
 void leftsideauton () {
     pros::lcd::set_text(7, "Left auton started");
+    disklaunch(5);
     
 }
 
