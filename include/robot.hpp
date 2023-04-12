@@ -14,4 +14,13 @@
 #define BOTTOM_INTAKE_PORT 4
 #define EXPANSION_PORT 5
 
+void okapiopcontrol();
+void okapiinitialize();
+void disklaunch(int i);
+void roller(int i);
+void rightsideauton();
+void skillsauton();
+void leftsideatuon();
+void lcdselect();
+void autonstart();
 #endif //_ROBOT_HPP_
