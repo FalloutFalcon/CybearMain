@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "cybeardev",
+    "project_name": "cybearcam",
     "target": "v5",
     "templates": {
       "kernel": {
@@ -310,7 +310,7 @@
     },
     "upload_options": {
       "description": "dev branch",
-      "slot": 2,
+      "slot": 3,
       "icon": "pros"
     }
   }

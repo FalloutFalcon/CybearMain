@@ -13,18 +13,27 @@ ControllerButton up_button(ControllerDigital::up);
 ControllerButton down_button(ControllerDigital::down);
 
 // Launcher related objects
-Motor launcher(LAUNCHER_PORT, false, AbstractMotor::gearset::blue, AbstractMotor::encoderUnits::counts);
+Motor launcher(LAUNCHER_PORT, true, AbstractMotor::gearset::blue, AbstractMotor::encoderUnits::counts);
 int launcher_efficency;
-int launcher_voltage = 12000;
+int motor_voltage = 12000;
+int current_laucher_voltage;
 
 // Intake related objects
-Motor top_intake(TOP_INTAKE_PORT);
-Motor bottom_intake(BOTTOM_INTAKE_PORT);
+Motor top_intake(TOP_INTAKE_PORT, false, AbstractMotor::gearset::green, AbstractMotor::encoderUnits::counts);
+Motor bottom_intake(BOTTOM_INTAKE_PORT, false, AbstractMotor::gearset::green, AbstractMotor::encoderUnits::counts);
 MotorGroup intake_group({top_intake, bottom_intake});
 int top_efficency;
 int bottom_efficency;
 
 Motor expansion(EXPANSION_PORT);
+
+ADIUltrasonic ultrasonic(ULTRASONIC_PING_PORT, ULTRASONIC_ECHO_PORT);
+pros::Vision vision_sensor (VISION_PORT);
+int objects;
+double disk_x_mid;
+double disk_y_mid;
+double disk_dir;
+bool disk_ready;
 
 double forward_move;
 double yaw_move;
@@ -42,7 +51,11 @@ int auton_mode = -1;
 void initialize() {
 	pros::lcd::initialize();
 	pros::lcd::set_text(1, "Initialize!");
-	okapiinitialize();
+	driveinitialize();
+    visionintit();
+    //sets the string to hold the motor steady and prevents it from unspooling during match
+    expansion.setBrakeMode(AbstractMotor::brakeMode::hold);
+    pros::lcd::set_text(1, "Initialize Done!");
 
 }
 
@@ -53,6 +66,7 @@ void initialize() {
  */
 void disabled() {
 	pros::lcd::set_text(1, "Disabled!");
+    drive->getModel()->arcade(0, 0); 
 }
 
 /**
@@ -68,6 +82,7 @@ void competition_initialize() {
 	pros::lcd::set_text(1, "Competition Initalize!");
 	// uses the 3 buttons to select a auton script
 	//lcdselect();
+    pros::lcd::set_text(1, "Competition Initalize Done!");
 
 }
 
@@ -85,7 +100,9 @@ void competition_initialize() {
 void autonomous() {
 	pros::lcd::set_text(1, "Autonomous!");
 	//autonstart();
-	rightsideauton();
+    //naviagtes to a disk and gets it in range of the intake
+    diskfinder();  
+    pros::lcd::set_text(1, "Autonomous Done!");
 }
 
 /**
@@ -104,27 +121,11 @@ void autonomous() {
 void opcontrol() {
 	pros::lcd::set_text(1, "Opcontrol!");
 	okapiopcontrol();
+    pros::lcd::set_text(1, "Opcontrol Done!");
 }
 
-/*
-std::shared_ptr<ChassisController> drive =
-        ChassisControllerBuilder()
-            .withMotors(
-                {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
-                {-FRONT_RIGHT_WHEEL_PORT, -BACK_RIGHT_WHEEL_PORT}
-            )
-            // Green gearset, 4 in wheel diam, 12 in wheel track
-            .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
-            .build();
-*/
-
-
-
-void okapiinitialize () {
-    pros::lcd::set_text(2, "Okapi initalize!");
-    //sets the string to hold the motor steady and prevents it from unspooling during match
-    expansion.setBrakeMode(AbstractMotor::brakeMode::hold);
-
+void driveinitialize() {
+    pros::lcd::set_text(2, "Drive initalize!");
     std::shared_ptr<ChassisController> drivebuild =
         ChassisControllerBuilder()
             .withMotors(
@@ -135,9 +136,10 @@ void okapiinitialize () {
             .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
             .build();
     drive = drivebuild;
+    pros::lcd::set_text(2, "Drive initalize Done!");
 }
 
-void okapiopcontrol () {
+void okapiopcontrol() {
     pros::lcd::set_text(2, "Okapi opcontrol!");
 
     while (true) {
@@ -148,86 +150,173 @@ void okapiopcontrol () {
             drive->getModel()->arcade(forward_move, yaw_move);     
         } else {
             drive->getModel()->arcade(0, 0); 
-        } 
-
-        if (y_button.changedToPressed()) {
-            disklaunch(3);
-        }
-        
+        }         
 
         //Allows for rapidly changing the voltage on the launcher it also prevents
         //It from going above recommended voltage or putting it in the negatives which reverses the spins on the motors
-        if (up_button.changedToPressed() && launcher_voltage <= 11000) {
-            launcher_voltage = launcher_voltage + 1000;
-            pros::lcd::print(5, "VOLTAGE:Launcher:%d/12000", launcher_voltage); 
+        if (up_button.changedToPressed() && motor_voltage <= 11000) {
+            motor_voltage = motor_voltage + 1000;
+            pros::lcd::print(5, "VOLTAGE:Launcher:%d/12000", motor_voltage); 
         }
-        if (down_button.changedToPressed() && launcher_voltage >= 1000) {
-            launcher_voltage = launcher_voltage - 1000;
-            pros::lcd::print(5, "VOLTAGE:Launcher:%d/12000", launcher_voltage); 
+        if (down_button.changedToPressed() && motor_voltage >= 1000) {
+            motor_voltage = motor_voltage - 1000;
+            pros::lcd::print(5, "VOLTAGE:Launcher:%d/12000", motor_voltage); 
         }
-
-        if (right_1_button.isPressed())  {
-            launcher.moveVoltage(launcher_voltage);
-        } else if (right_2_button.isPressed()) {
-            launcher.moveVoltage(-launcher_voltage);
-        } else {
+        
+        current_laucher_voltage = launcher.getVoltage();
+        if (right_1_button.isPressed() & current_laucher_voltage == 0) {
+            launcher.moveVoltage(motor_voltage);
+        } else if (right_2_button.isPressed() & current_laucher_voltage == 0) {
+            launcher.moveVoltage(-motor_voltage);
+        } else if (right_1_button.isPressed() || right_2_button.isPressed()) {
             launcher.moveVoltage(0);
         }
 
         if (left_1_button.isPressed()) {
-            intake_group.moveVoltage(launcher_voltage);
+            intake_group.moveVoltage(motor_voltage);
         } else if (left_2_button.isPressed()) {
-            intake_group.moveVoltage(-launcher_voltage);
+            intake_group.moveVoltage(-motor_voltage);
         } else {
             top_intake.moveVoltage(0);
             bottom_intake.moveVelocity(forward_move);
         }
 
         if (a_button.isPressed()) {
-            expansion.moveVoltage(launcher_voltage);
+            expansion.moveVoltage(motor_voltage);
         } else if (b_button.isPressed()) {
-            expansion.moveVoltage(-launcher_voltage);
+            expansion.moveVoltage(-motor_voltage);
         } else {
             expansion.moveVoltage(0);
         }
+
         launcher_efficency = launcher.getEfficiency();
         top_efficency = top_intake.getEfficiency();
         bottom_efficency = bottom_intake.getEfficiency();
         pros::lcd::print(4, "EFF:out:%d Mid:%d In:%d", launcher_efficency, top_efficency, bottom_efficency);
+        
+        if (y_button.changedToPressed()) {
+            disklaunch();
+        }
         // Run the test autonomous routine if we press the button
-        
-        
         if (x_button.changedToPressed()) {
             pros::lcd::set_text(2, "Auton Test!");
             autonstart();
-			lcdselect();
-            
+			lcdselect();      
         }
         
         // Wait and give up the time we don't need to other tasks.
         // Additionally, joystick values, motor telemetry, etc. all updates every 10 ms.
         pros::delay(10); 
     }
+    pros::lcd::set_text(2, "Okapi opcontrol Done!");
 }
 
-void disklaunch (int i) {
+void disklaunch() {
+    pros::lcd::set_text(2, "Disk launch!");
     launcher.moveVoltage(12000);
-    pros::delay(1000);
+    pros::delay(5000);
     intake_group.moveVoltage(12000);
-    pros::delay(i * 1000);
+    pros::delay(3000);
     launcher.moveVoltage(0);
     intake_group.moveVoltage(0);
+    pros::lcd::set_text(2, "Disk launch done!");
 }
 
 void roller (int i) {
+    pros::lcd::set_text(2, "Roller!");
     top_intake.moveVoltage(6000);
     drive->setMaxVelocity(100);
     drive->moveDistance(6_in);
     pros::delay(i * 1000);
     drive->moveDistance(-3_in);
     top_intake.moveVoltage(0);
+    pros::lcd::set_text(2, "Roller done!");
 }
 
+/**
+ * sets up the vision sensor to track disks
+ */
+void visionintit() {
+    pros::lcd::set_text(2, "Vision intit!");
+    pros::Vision vision_sensor (VISION_PORT);
+    vision_sensor.clear_led();
+    pros::vision_signature_s_t YELLOW_SIG =
+    pros::Vision::signature_from_utility(EXAMPLE_SIG, 1235, 1575, 1404, -4241, -3935, -4088, 3.000, 0);
+    vision_sensor.set_signature(EXAMPLE_SIG, &YELLOW_SIG);
+    pros::lcd::set_text(2, "Vision intit done!");
+}
+
+/**
+ * tracks disks and locates there center cordinates
+ * also checks if the disk is close enough to the intake
+ */
+void vision () {
+    pros::lcd::set_text(2, "Vision!");
+    pros::lcd::set_text(5, "getting object count");
+    objects = vision_sensor.get_object_count();
+    if (objects != 0) {
+        // Gets the largest object
+        pros::lcd::print(5, "object count = %d", objects);      
+        pros::vision_object_s_t rtn = vision_sensor.get_by_size(0);
+        disk_x_mid = rtn.x_middle_coord;
+        disk_y_mid = rtn.y_middle_coord;
+        pros::lcd::print(6, "disk cord x=%d y=%d", disk_x_mid, disk_y_mid);
+        std::cout << "sig: " << disk_x_mid;
+        vision_sensor.set_led(COLOR_YELLOW);
+
+        if (disk_x_mid > 158.0) {
+            disk_dir = disk_x_mid - 158;
+        }
+        else if (disk_x_mid < 158.0) {
+            disk_dir = 158 - disk_x_mid;
+            disk_dir = disk_dir * -1;
+        }
+        else {
+            disk_dir = 0;
+        }
+        pros::lcd::print(4, "disk direction = %d", disk_dir);
+        }
+    else {
+        pros::lcd::set_text(5, "no object found");
+        vision_sensor.set_led(COLOR_RED);
+    }
+    //checks to see if the disk is infront of the intake
+    if (disk_x_mid > 148 && disk_x_mid < 168) {
+        if (disk_y_mid > 100) {
+            disk_ready = true;
+        }
+    }
+    
+    pros::lcd::set_text(2, "Vision done!");
+}
+
+/**
+ * a simple pathfindng system to home in on disks infront of it
+ * also collects them into the intake
+ */
+void diskfinder () {
+    pros::lcd::set_text(2, "Disk finder!"); 
+    disk_ready = false;
+    forward_move = -0.2;
+    while(disk_ready == false) {
+        vision();
+        pros::delay(10);
+        //gets disk_dir to a range of -0.1 to 0.1
+        yaw_move = disk_dir/158;
+        yaw_move = yaw_move/2;
+        drive->getModel()->arcade(forward_move, yaw_move); 
+        pros::delay(10);
+    }
+    forward_move = -0.3;
+    yaw_move = 0;
+    drive->getModel()->arcade(forward_move, yaw_move);
+    intake_group.moveVoltage(12000);
+    pros::delay(2000);
+    drive->getModel()->arcade(0, 0);
+    pros::lcd::set_text(2, "Disk finder done!"); 
+   
+    
+}
 
 void leftsideauton () {
     pros::lcd::set_text(7, "Left auton started");
@@ -257,6 +346,9 @@ void skillsauton () {
     
 }
 
+/**
+ * allows you yo choose which auton is used
+ */
 void lcdselect () {
     pros::lcd::set_text(2, "LCDSelect!");
 	while (auton_mode == -1) {
@@ -273,6 +365,9 @@ void lcdselect () {
     pros::lcd::print(7, "auton mode selected = %d", auton_mode); 
 }
 
+/**
+ * selects a auton based on what you choose in lcd select
+ */
 void autonstart () {
     pros::lcd::set_text(2, "Autonstart!");
     if (auton_mode == 0) {
