@@ -1,3 +1,6 @@
+/*
+https://github.com/FalloutFalcon/CybearMain
+*/
 #include "main.h"
 using namespace okapi;
 Controller controller;
@@ -105,7 +108,7 @@ void autonomous() {
 	pros::lcd::set_text(1, "Autonomous!");
 	//autonstart();
     //naviagtes to a disk and gets it in range of the intake
-    diskfinder();  
+    skillsauton();
     pros::lcd::set_text(1, "Autonomous Done!");
 }
 
@@ -211,9 +214,6 @@ void okapiopcontrol() {
         bottom_efficency = bottom_intake.getEfficiency();
         pros::lcd::print(4, "EFF:out:%d Mid:%d In:%d", launcher_efficency, top_efficency, bottom_efficency);
         
-        if (y_button.changedToPressed()) {
-            disklaunch();
-        }
         // Run the test autonomous routine if we press the button
         if (x_button.changedToPressed()) {
             launcher.moveVoltage(0);
@@ -352,26 +352,43 @@ void skillsauton () {
     Motor expansion(EXPANSION_PORT);
     pros::lcd::set_text(7, "Skills auton selected");
     //launcher preloads into the goal
+    drive->moveDistance(3_in);
     disklaunch();
     //navigate to roller
-    drive->moveDistance(-12_in);
-    drive->turnAngle (90_deg);
+    drive->moveDistance(-24_in);
+    drive->turnAngle(-90_deg);
+    drive->moveDistance(3_in);
+    roller(2);
+    //try and grab the disc inbetween
+    
+    //other roller
     drive->moveDistance(-6_in);
-    //spin roller
+    drive->turnAngle(-90_deg);
+    drive->moveDistance(6_in);
     roller(2);
     //collect disks
-    diskfinder();
-    //spin other roller
-    drive->turnAngle (-90_deg);
-    roller(2);
+    
     //shoot discs into opposite goal while navigating towards oposite rollers 
+    drive->turnAngle(-90_deg);
+    drive->moveDistance(24_in);
     disklaunch();
+    drive->moveDistance(6_in);
+    drive->turnAngle(-90_deg);
+    drive->moveDistance(24_in);
     //spin other rollers
+    drive->turnAngle(90_deg);
+    drive->moveDistance(3_in);
+    roller(2);
+    drive->moveDistance(-6_in);
+    drive->turnAngle(-90_deg);
+    drive->moveDistance(6_in);
     roller(2);
     //collect and shoot discs till timer is out
     //need to make a loop that disk finds, naviagtes to the goal, and launchs
-    diskfinder();
-    disklaunch();
+    //last 10 seconds deploy expainsion
+    expansion.moveVoltage(-motor_voltage);
+    drive->moveDistance(-12_ft);
+
              
     
 }
