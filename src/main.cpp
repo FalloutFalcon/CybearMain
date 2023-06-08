@@ -11,12 +11,14 @@ ControllerButton x_button(ControllerDigital::X);
 ControllerButton y_button(ControllerDigital::Y);
 ControllerButton up_button(ControllerDigital::up);
 ControllerButton down_button(ControllerDigital::down);
-
+ControllerButton left_button(ControllerDigital::left);
+ControllerButton right_button(ControllerDigital::right);
 // Launcher related objects
 Motor launcher(LAUNCHER_PORT, true, AbstractMotor::gearset::blue, AbstractMotor::encoderUnits::counts);
 int launcher_efficency;
 int motor_voltage = 12000;
 int current_laucher_voltage;
+bool launcher_on = false;
 
 // Intake related objects
 Motor top_intake(TOP_INTAKE_PORT, false, AbstractMotor::gearset::green, AbstractMotor::encoderUnits::counts);
@@ -41,6 +43,8 @@ double yaw_move;
 std::shared_ptr<ChassisController> drive;
 
 int auton_mode = -1;
+
+Timer testTimer;
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -143,6 +147,7 @@ void okapiopcontrol() {
     pros::lcd::set_text(2, "Okapi opcontrol!");
 
     while (true) {
+        graphMotor();
         // Arcade drive with the left stick controller.getAnalog(ControllerAnalog::leftY) > 10 && controller.getAnalog(ControllerAnalog::rightX) > 10
         forward_move = controller.getAnalog(ControllerAnalog::leftY);
         yaw_move = controller.getAnalog(ControllerAnalog::rightX);
@@ -164,12 +169,24 @@ void okapiopcontrol() {
         }
         
         current_laucher_voltage = launcher.getVoltage();
-        if (right_1_button.isPressed() & current_laucher_voltage == 0) {
-            launcher.moveVoltage(motor_voltage);
-        } else if (right_2_button.isPressed() & current_laucher_voltage == 0) {
-            launcher.moveVoltage(-motor_voltage);
-        } else if (right_1_button.isPressed() || right_2_button.isPressed()) {
-            launcher.moveVoltage(0);
+        if(launcher_on == true) {
+            if (right_1_button.changedToPressed() || right_2_button.changedToPressed()) {
+                launcher.moveVoltage(0);
+                launcher_on = false;
+                pros::lcd::set_text(5, "Disk Launch = False!");
+            }
+        }
+        else if (launcher_on == false) {
+            if (right_1_button.changedToPressed()) {
+                launcher.moveVoltage(motor_voltage);
+                launcher_on = true;
+                pros::lcd::set_text(6, "Disk Launch = True!");
+            }
+            if (right_2_button.changedToPressed()) {
+                launcher.moveVoltage(-motor_voltage);
+                launcher_on = true;
+                pros::lcd::set_text(6, "Disk Launch = True!");
+            }
         }
 
         if (left_1_button.isPressed()) {
@@ -199,10 +216,9 @@ void okapiopcontrol() {
         }
         // Run the test autonomous routine if we press the button
         if (x_button.changedToPressed()) {
-            pros::lcd::set_text(2, "Auton Test!");
-            autonstart();
-			lcdselect();      
+            launcher.moveVoltage(0);
         }
+            
         
         // Wait and give up the time we don't need to other tasks.
         // Additionally, joystick values, motor telemetry, etc. all updates every 10 ms.
@@ -314,13 +330,11 @@ void diskfinder () {
     pros::delay(2000);
     drive->getModel()->arcade(0, 0);
     pros::lcd::set_text(2, "Disk finder done!"); 
-   
-    
 }
 
 void leftsideauton () {
     pros::lcd::set_text(7, "Left auton started");
-    roller(1);
+    diskfinder();
 }
 
 void rightsideauton () {
@@ -337,17 +351,33 @@ void rightsideauton () {
 void skillsauton () {
     Motor expansion(EXPANSION_PORT);
     pros::lcd::set_text(7, "Skills auton selected");
+    //launcher preloads into the goal
+    disklaunch();
+    //navigate to roller
+    drive->moveDistance(-12_in);
+    drive->turnAngle (90_deg);
+    drive->moveDistance(-6_in);
+    //spin roller
     roller(2);
-    drive->setMaxVelocity(50);
-    drive->turnAngle(90_deg);
-    drive->waitUntilSettled();
-    //expansion.moveVoltage(-6000);
-    drive->moveDistance(-24_ft);               
+    //collect disks
+    diskfinder();
+    //spin other roller
+    drive->turnAngle (-90_deg);
+    roller(2);
+    //shoot discs into opposite goal while navigating towards oposite rollers 
+    disklaunch();
+    //spin other rollers
+    roller(2);
+    //collect and shoot discs till timer is out
+    //need to make a loop that disk finds, naviagtes to the goal, and launchs
+    diskfinder();
+    disklaunch();
+             
     
 }
 
 /**
- * allows you yo choose which auton is used
+ * allows you to choose which auton is used
  */
 void lcdselect () {
     pros::lcd::set_text(2, "LCDSelect!");
@@ -371,7 +401,8 @@ void lcdselect () {
 void autonstart () {
     pros::lcd::set_text(2, "Autonstart!");
     if (auton_mode == 0) {
-        pros::lcd::set_text(7, "No auton started");
+        pros::lcd::set_text(7, "Default auton started");
+        leftsideauton();
     } else if (auton_mode == 1) {
         pros::lcd::set_text(7, "Left auton started");
         leftsideauton();
@@ -384,4 +415,13 @@ void autonstart () {
     } else {
         pros::lcd::set_text(7, "Error in auton start");
     }    
+}
+
+void graphMotor () {
+    pros::lcd::set_text(3, "Graph Motor!");
+    QTime time = testTimer.millis(); 
+    std::cout << time.getValue() << " , " 
+  << launcher.getActualVelocity() << " , " <<  launcher.getTargetVelocity() << " , " 
+  << launcher.getTorque() << " , " << launcher.getTemperature()
+  << std::endl;
 }

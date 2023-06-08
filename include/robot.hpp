@@ -33,4 +33,5 @@ void leftsideatuon();
 void lcdselect();
 void autonstart();
 void diskfinder();
+void graphMotor();
 #endif //_ROBOT_HPP_
