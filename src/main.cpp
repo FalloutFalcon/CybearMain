@@ -4,6 +4,7 @@ https://github.com/FalloutFalcon/CybearMain
 #include "main.h"
 using namespace okapi;
 Controller controller;
+//way to many lines for this tbh
 ControllerButton right_1_button(ControllerDigital::R1);
 ControllerButton right_2_button(ControllerDigital::R2);
 ControllerButton left_1_button(ControllerDigital::L1);
@@ -16,6 +17,7 @@ ControllerButton up_button(ControllerDigital::up);
 ControllerButton down_button(ControllerDigital::down);
 ControllerButton left_button(ControllerDigital::left);
 ControllerButton right_button(ControllerDigital::right);
+
 // Launcher related objects
 Motor launcher(LAUNCHER_PORT, true, AbstractMotor::gearset::blue, AbstractMotor::encoderUnits::counts);
 int launcher_efficency;
@@ -32,6 +34,7 @@ int bottom_efficency;
 
 Motor expansion(EXPANSION_PORT);
 
+//vision related objects
 ADIUltrasonic ultrasonic(ULTRASONIC_PING_PORT, ULTRASONIC_ECHO_PORT);
 pros::Vision vision_sensor (VISION_PORT);
 int objects;
@@ -45,9 +48,9 @@ double yaw_move;
 
 std::shared_ptr<ChassisController> drive;
 
-int auton_mode = -1;
+int auton_mode = 0;
 
-Timer testTimer;
+Timer timer;
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -73,6 +76,7 @@ void initialize() {
  */
 void disabled() {
 	pros::lcd::set_text(1, "Disabled!");
+    //should already do this but its a backup just in case
     drive->getModel()->arcade(0, 0); 
 }
 
@@ -87,7 +91,6 @@ void disabled() {
  */
 void competition_initialize() {
 	pros::lcd::set_text(1, "Competition Initalize!");
-	// uses the 3 buttons to select a auton script
 	//lcdselect();
     pros::lcd::set_text(1, "Competition Initalize Done!");
 
@@ -106,8 +109,7 @@ void competition_initialize() {
  */
 void autonomous() {
 	pros::lcd::set_text(1, "Autonomous!");
-	//autonstart();
-    //naviagtes to a disk and gets it in range of the intake
+	//lcd select and auton start belong here but they still remain pretty buggy and dont work when not in comp
     skillsauton();
     pros::lcd::set_text(1, "Autonomous Done!");
 }
@@ -133,7 +135,7 @@ void opcontrol() {
 
 void driveinitialize() {
     pros::lcd::set_text(2, "Drive initalize!");
-    std::shared_ptr<ChassisController> drivebuild =
+    std::shared_ptr<ChassisController> drive =
         ChassisControllerBuilder()
             .withMotors(
                 {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
@@ -142,7 +144,6 @@ void driveinitialize() {
             // Green gearset, 4 in wheel diam, 12 in wheel track
             .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
             .build();
-    drive = drivebuild;
     pros::lcd::set_text(2, "Drive initalize Done!");
 }
 
@@ -219,7 +220,6 @@ void okapiopcontrol() {
             launcher.moveVoltage(0);
         }
             
-        
         // Wait and give up the time we don't need to other tasks.
         // Additionally, joystick values, motor telemetry, etc. all updates every 10 ms.
         pros::delay(10); 
@@ -347,41 +347,60 @@ void rightsideauton () {
     //intake_group.moveVoltage(-12000);
     //launcher.moveVoltage(-12000);
 }
-
+/**
+ * I hate having this all hard coded but the vision sensor has not been tested enough to trust it in match
+ */
 void skillsauton () {
     Motor expansion(EXPANSION_PORT);
     pros::lcd::set_text(7, "Skills auton selected");
     //launcher preloads into the goal
     drive->moveDistance(3_in);
+    drive->waitUntilSettled();
     disklaunch();
     //navigate to roller
     drive->moveDistance(-24_in);
+    drive->waitUntilSettled();
     drive->turnAngle(-90_deg);
+    drive->waitUntilSettled();
     drive->moveDistance(3_in);
+    drive->waitUntilSettled();
     roller(2);
     //try and grab the disc inbetween
     
     //other roller
     drive->moveDistance(-6_in);
+    drive->waitUntilSettled();
     drive->turnAngle(-90_deg);
+    drive->waitUntilSettled();
     drive->moveDistance(6_in);
+    drive->waitUntilSettled();
     roller(2);
     //collect disks
     
     //shoot discs into opposite goal while navigating towards oposite rollers 
     drive->turnAngle(-90_deg);
+    drive->waitUntilSettled();
     drive->moveDistance(24_in);
+    drive->waitUntilSettled();
     disklaunch();
     drive->moveDistance(6_in);
+    drive->waitUntilSettled();
     drive->turnAngle(-90_deg);
+    drive->waitUntilSettled();
     drive->moveDistance(24_in);
+    drive->waitUntilSettled();
     //spin other rollers
     drive->turnAngle(90_deg);
+    drive->waitUntilSettled();
     drive->moveDistance(3_in);
+    drive->waitUntilSettled();
     roller(2);
     drive->moveDistance(-6_in);
+    drive->waitUntilSettled();
     drive->turnAngle(-90_deg);
+    drive->waitUntilSettled();
     drive->moveDistance(6_in);
+    drive->waitUntilSettled();
     roller(2);
     //collect and shoot discs till timer is out
     //need to make a loop that disk finds, naviagtes to the goal, and launchs
@@ -436,7 +455,7 @@ void autonstart () {
 
 void graphMotor () {
     pros::lcd::set_text(3, "Graph Motor!");
-    QTime time = testTimer.millis(); 
+    QTime time = timer.millis(); 
     std::cout << time.getValue() << " , " 
   << launcher.getActualVelocity() << " , " <<  launcher.getTargetVelocity() << " , " 
   << launcher.getTorque() << " , " << launcher.getTemperature()
