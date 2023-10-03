@@ -4,7 +4,7 @@ https://github.com/FalloutFalcon/CybearMain
 #include "main.h"
 using namespace okapi;
 Controller controller;
-//way to many lines for this tbh
+// way to many lines for this tbh
 ControllerButton right_1_button(ControllerDigital::R1);
 ControllerButton right_2_button(ControllerDigital::R2);
 ControllerButton left_1_button(ControllerDigital::L1);
@@ -34,9 +34,9 @@ int bottom_efficency;
 
 Motor expansion(EXPANSION_PORT);
 
-//vision related objects
+// vision related objects
 ADIUltrasonic ultrasonic(ULTRASONIC_PING_PORT, ULTRASONIC_ECHO_PORT);
-pros::Vision vision_sensor (VISION_PORT);
+pros::Vision vision_sensor(VISION_PORT);
 int objects;
 double disk_x_mid;
 double disk_y_mid;
@@ -63,7 +63,7 @@ void initialize() {
 	pros::lcd::set_text(1, "Initialize!");
 	driveinitialize();
     visionintit();
-    //sets the string to hold the motor steady and prevents it from unspooling during match
+    // sets the string to hold the motor steady and prevents it from unspooling during match
     expansion.setBrakeMode(AbstractMotor::brakeMode::hold);
     pros::lcd::set_text(1, "Initialize Done!");
 
@@ -76,7 +76,7 @@ void initialize() {
  */
 void disabled() {
 	pros::lcd::set_text(1, "Disabled!");
-    //should already do this but its a backup just in case
+    // should already do this but its a backup just in case
     drive->getModel()->arcade(0, 0); 
 }
 
@@ -129,13 +129,14 @@ void autonomous() {
  */
 void opcontrol() {
 	pros::lcd::set_text(1, "Opcontrol!");
+    //skillsauton();
 	okapiopcontrol();
     pros::lcd::set_text(1, "Opcontrol Done!");
 }
 
 void driveinitialize() {
     pros::lcd::set_text(2, "Drive initalize!");
-    std::shared_ptr<ChassisController> drive =
+    std::shared_ptr<ChassisController> drivebuild =
         ChassisControllerBuilder()
             .withMotors(
                 {FRONT_LEFT_WHEEL_PORT, BACK_LEFT_WHEEL_PORT}, 
@@ -145,14 +146,15 @@ void driveinitialize() {
             .withDimensions(AbstractMotor::gearset::green, {{4_in, 12_in}, imev5GreenTPR})
             .build();
     pros::lcd::set_text(2, "Drive initalize Done!");
+    drive = drivebuild;
 }
 
 void okapiopcontrol() {
     pros::lcd::set_text(2, "Okapi opcontrol!");
 
     while (true) {
-        graphMotor();
-        // Arcade drive with the left stick controller.getAnalog(ControllerAnalog::leftY) > 10 && controller.getAnalog(ControllerAnalog::rightX) > 10
+        //graphMotor();
+        //Arcade drive with the left stick controller.getAnalog(ControllerAnalog::leftY) > 10 && controller.getAnalog(ControllerAnalog::rightX) > 10
         forward_move = controller.getAnalog(ControllerAnalog::leftY);
         yaw_move = controller.getAnalog(ControllerAnalog::rightX);
         if (abs (forward_move) > .2 || abs (yaw_move) > .2) {
@@ -161,8 +163,8 @@ void okapiopcontrol() {
             drive->getModel()->arcade(0, 0); 
         }         
 
-        //Allows for rapidly changing the voltage on the launcher it also prevents
-        //It from going above recommended voltage or putting it in the negatives which reverses the spins on the motors
+        // Allows for rapidly changing the voltage on the launcher it also prevents
+        // It from going above recommended voltage or putting it in the negatives which reverses the spins on the motors
         if (up_button.changedToPressed() && motor_voltage <= 11000) {
             motor_voltage = motor_voltage + 1000;
             pros::lcd::print(5, "VOLTAGE:Launcher:%d/12000", motor_voltage); 
@@ -238,14 +240,13 @@ void disklaunch() {
     pros::lcd::set_text(2, "Disk launch done!");
 }
 
-void roller (int i) {
+void roller (double i) {
     pros::lcd::set_text(2, "Roller!");
-    top_intake.moveVoltage(6000);
-    drive->setMaxVelocity(100);
-    drive->moveDistance(6_in);
+    top_intake.moveVoltage(-12000);
+    drive->getModel()->arcade(0.5, 0); 
     pros::delay(i * 1000);
-    drive->moveDistance(-3_in);
     top_intake.moveVoltage(0);
+    drive->getModel()->arcade(0, 0); 
     pros::lcd::set_text(2, "Roller done!");
 }
 
@@ -296,7 +297,7 @@ void vision () {
         pros::lcd::set_text(5, "no object found");
         vision_sensor.set_led(COLOR_RED);
     }
-    //checks to see if the disk is infront of the intake
+    // checks to see if the disk is infront of the intake
     if (disk_x_mid > 148 && disk_x_mid < 168) {
         if (disk_y_mid > 100) {
             disk_ready = true;
@@ -317,7 +318,7 @@ void diskfinder () {
     while(disk_ready == false) {
         vision();
         pros::delay(10);
-        //gets disk_dir to a range of -0.1 to 0.1
+        // gets disk_dir to a range of -0.1 to 0.1
         yaw_move = disk_dir/158;
         yaw_move = yaw_move/2;
         drive->getModel()->arcade(forward_move, yaw_move); 
@@ -338,73 +339,75 @@ void leftsideauton () {
 }
 
 void rightsideauton () {
-    pros::lcd::set_text(7, "Right auton started");
+    Motor expansion(EXPANSION_PORT);
+    pros::lcd::set_text(7, "Skills auton selected");
+    drive->setMaxVelocity(50);
+    // launcher preloads into the goal
     drive->moveDistance(6_in);
-    drive->turnAngle(90_deg);   
-    roller(1);
-    drive->turnAngle (-90_deg);
-    drive->moveDistance(3_ft);
-    //intake_group.moveVoltage(-12000);
-    //launcher.moveVoltage(-12000);
+    drive->turnAngle(15_deg);
+    drive->waitUntilSettled();
+    disklaunch();
+    drive->turnAngle(-15_deg);
+    drive->moveDistance(-6_in);
+    // navigate to roller
+    drive->moveDistance(-60_in);
+    drive->waitUntilSettled();
+    drive->turnAngle(-90_deg);
+    drive->waitUntilSettled();
+    drive->moveDistance(12_in);
+    drive->waitUntilSettled();
+    roller(.2);
 }
+
 /**
  * I hate having this all hard coded but the vision sensor has not been tested enough to trust it in match
  */
 void skillsauton () {
-    Motor expansion(EXPANSION_PORT);
     pros::lcd::set_text(7, "Skills auton selected");
-    //launcher preloads into the goal
-    drive->moveDistance(3_in);
+    drive->setMaxVelocity(50);
+    // Bold move
+    intake_group.moveVoltage(1000);
+    pros::delay(1000);
+    intake_group.moveVoltage(0);
+    drive->moveDistance(6_in);
+    drive->turnAngle(15_deg);
     drive->waitUntilSettled();
     disklaunch();
-    //navigate to roller
-    drive->moveDistance(-24_in);
-    drive->waitUntilSettled();
-    drive->turnAngle(-90_deg);
-    drive->waitUntilSettled();
-    drive->moveDistance(3_in);
-    drive->waitUntilSettled();
-    roller(2);
-    //try and grab the disc inbetween
-    
-    //other roller
+    drive->turnAngle(-15_deg);
     drive->moveDistance(-6_in);
-    drive->waitUntilSettled();
-    drive->turnAngle(-90_deg);
-    drive->waitUntilSettled();
+    intake_group.moveVoltage(12000);
+    pros::delay(1000);
+    intake_group.moveVoltage(0);
+    // launcher preloads into the goal
     drive->moveDistance(6_in);
-    drive->waitUntilSettled();
-    roller(2);
-    //collect disks
-    
-    //shoot discs into opposite goal while navigating towards oposite rollers 
-    drive->turnAngle(-90_deg);
-    drive->waitUntilSettled();
-    drive->moveDistance(24_in);
+    drive->turnAngle(15_deg);
     drive->waitUntilSettled();
     disklaunch();
-    drive->moveDistance(6_in);
-    drive->waitUntilSettled();
-    drive->turnAngle(-90_deg);
-    drive->waitUntilSettled();
-    drive->moveDistance(24_in);
-    drive->waitUntilSettled();
-    //spin other rollers
-    drive->turnAngle(90_deg);
-    drive->waitUntilSettled();
-    drive->moveDistance(3_in);
-    drive->waitUntilSettled();
-    roller(2);
+    drive->turnAngle(-15_deg);
     drive->moveDistance(-6_in);
+    // navigate to roller
+    drive->moveDistance(-60_in);
     drive->waitUntilSettled();
     drive->turnAngle(-90_deg);
     drive->waitUntilSettled();
-    drive->moveDistance(6_in);
+    drive->moveDistance(12_in);
     drive->waitUntilSettled();
-    roller(2);
-    //collect and shoot discs till timer is out
-    //need to make a loop that disk finds, naviagtes to the goal, and launchs
-    //last 10 seconds deploy expainsion
+    roller(.2);
+    // try and grab the disc inbetween
+    // other roller
+    drive->moveDistance(-28_in);
+    drive->turnAngle(-90_deg);
+    drive->waitUntilSettled();
+    drive->moveDistance(16_in);
+    drive->waitUntilSettled();
+    roller(.2);
+    // collect disks
+    // shoot discs into opposite goal while navigating towards oposite rollers 
+    // collect and shoot discs till timer is out
+    // need to make a loop that disk finds, naviagtes to the goal, and launchs
+    // last 10 seconds deploy expainsion
+    drive->moveDistance(-12_in);
+    drive->turnAngle(45_deg);
     expansion.moveVoltage(-motor_voltage);
     drive->moveDistance(-12_ft);
 
